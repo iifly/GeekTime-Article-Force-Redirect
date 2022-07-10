@@ -1,0 +1,60 @@
+// ==UserScript==
+// @name         极客时间专栏文章链接跳转
+// @namespace    https://github.com/iifly
+// @version      0.1
+// @description  极客时间专栏文章跳过订阅校验
+// @author       iifly
+// @match        *://time.geekbang.org/column/article/*
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @grant        none
+// @require      https://unpkg.com/ajax-hook@1.8.3/dist/ajaxhook.min.js
+// ==/UserScript==
+
+
+(function() {
+    'use strict';
+
+    const articleRequestUrlRegex = /^https?:\/\/time\.geekbang\.org\/serv\/v\d\/column\/articles/;
+    const baseUrl = "https://time.geekbang.org/column/article/"
+    var articleList = [];
+    hookAjax({
+        //拦截回调
+        onreadystatechange:function(xhr){
+            if (xhr.readyState === 4 && articleRequestUrlRegex.test(xhr.responseURL)) {
+                let resJson = JSON.parse(xhr.response);
+                articleList = resJson.data.list;
+            }
+        }
+    })
+
+    function waitLoad(time){
+        var len = window.document.getElementsByClassName("ArticleItem_articleItem_vVEIy").length;
+        // console.log(len);
+        if(0 === len && time++ < 10){
+            console.log(time);
+            setTimeout(waitLoad(time), 1000);
+        }
+    }
+    function print(){
+        // console.log(articleList);
+        waitLoad(1);
+        var articleItem = window.document.getElementsByClassName("ArticleItem_articleItem_vVEIy");
+        for(var item of articleItem){
+            // console.log(item);
+            var titleDiv = item.querySelector(".ArticleItem_articleTitle_2HMO8");
+            // console.log(titleDiv)
+            for(var article of articleList){
+                if(titleDiv.innerText === article.article_title){
+                    // console.log(article.article_title);
+                    var div = document.createElement("a");
+                    div.href= baseUrl + article.id;
+                    div.style ="z-index:999";
+                    div.innerText = "跳转点我！"
+                    item.appendChild(div);
+                }
+            }
+
+        }
+    }
+    setTimeout(print, 5000)
+})();
